@@ -116,3 +116,5 @@ rmse = np.sqrt(mse)  # Compute RMSE
 # Print the results
 print(f"\nMean Squared Error (MSE): {mse:.2f}")
 print(f"Root Mean Squared Error (RMSE): {rmse:.2f}")
+
+print("github check")
