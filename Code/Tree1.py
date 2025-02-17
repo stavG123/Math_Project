@@ -70,7 +70,7 @@ plt.show()
 
 # check the models 
 training_plans = pd.DataFrame({
-    "Training_Load": [70, 85, 100],  
+    "Training_Load": [25, 30, 27],  
     "Max_HR (BPM)": [160, 175, 190],  
     "Calories_Burned": [800, 950, 1100],  
     "Freestyle": [1000, 1200, 1400],  
@@ -92,6 +92,3 @@ training_plans["Predicted_Total_Distance"] = predicted_distances
 
 # Display the optimized training strategies
 print(training_plans)
-
-
-
