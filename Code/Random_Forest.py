@@ -85,3 +85,5 @@ training_plans["Predicted_Total_Distance"] = predicted_distances
 
 # Display the optimized training strategies
 print(training_plans)
+
+print("Checkin the new branch")
