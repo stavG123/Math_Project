@@ -103,3 +103,77 @@ body {
   background-color: #fff;
   color: #333; /* Inverted hover effect */
 }
+
+.navbar-left .logo {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-logo {
+  width: 50px;  /* Adjust the size as needed */
+  height: auto;
+  margin-right: 10px; /* Add spacing */
+}
+
+.logo-description {
+  text-align: center;
+  padding: 20px;
+  background-color: #f4f4f4;
+  margin-top: 20px;
+  border-top: 2px solid #2f5fd9;
+}
+
+.logo-description h2 {
+  color: #142f61;
+  font-size: 24px;
+}
+
+.logo-description p {
+  font-size: 18px;
+  color: #555;
+}
+
+.video-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.video-container iframe {
+  width: 45%;
+  height: 250px;
+  border-radius: 10px;
+}
+
+.logo-description {
+  text-align: center;
+  padding: 20px;
+  background-color: #f4f4f4;
+  margin-top: 20px;
+  border-top: 2px solid #2f5fd9;
+}
+
+.logo-description h2 {
+  color: #142f61;
+  font-size: 24px;
+}
+
+.logo-description p {
+  font-size: 18px;
+  color: #555;
+}
+
+.video-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.video-container iframe {
+  width: 45%;
+  height: 250px;
+  border-radius: 10px;
+}
+
