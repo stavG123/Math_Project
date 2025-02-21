@@ -1,1 +1,1 @@
-Project in math combine ML and Full Stack
+Project in ML and Full Stack using Math
