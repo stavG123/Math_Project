@@ -177,3 +177,32 @@ body {
   border-radius: 10px;
 }
 
+.home-container {
+  display: flex;
+  flex-direction: column; /* Stack everything vertically */
+  align-items: center;
+  text-align: center;
+}
+
+.content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 80%;
+  margin-bottom: 50px; /* Adds space before the images */
+}
+
+.image-section {
+  display: flex;
+  justify-content: center;
+  gap: 50px; /* Adds space between the images */
+  margin-top: 20px; /* Adjust for spacing */
+}
+
+.animated-image {
+  width: 40%;
+  max-width: 300px;
+  border-radius: 10px;
+}
+
+
