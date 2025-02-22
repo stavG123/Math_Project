@@ -17,9 +17,7 @@ const Navbar = () => {
         <div className="navbar-center">
           <ul className="nav-links">
             <li><Link to="/">Home</Link></li>  {/* Uses React Router navigation */}
-            <li><Link to="/swimmer">Swimmer</Link></li> 
-            <li><Link to="/team">Team</Link></li>
-            <li><Link to="/support">Support</Link></li>
+            <li><Link to="/swimmer">Swimmer Check</Link></li> 
           </ul>
         </div>
 
