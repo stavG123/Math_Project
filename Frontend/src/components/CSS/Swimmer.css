@@ -1,10 +1,98 @@
-.swimmer-text-bar {
-    text-align: center;
-    padding: 20px;
-    background-color: #eef2ff;
-    margin-top: 20px;
-    border-top: 2px solid #1e40af;
-  }
-  
-  
-  
+/* Swimmer.css */
+#root {
+  width: 100vw; /* Make it full width */
+  min-height: 60vh; /* Ensure it takes the full height of the viewport */
+  display: flex;
+  flex-direction: column; /* Stack children elements properly */
+  align-items: center; /* Center horizontally */
+  justify-content: flex-start; /* Align content towards the top */
+  padding-bottom: 50px; /* Ensure spacing at the bottom */
+  background-color: #f8f9fa; /* Optional: Light background */
+}
+.swimmer-container {
+  position: relative;
+  top: 100px; /* Move it down to avoid navbar overlap */
+  left: 10px; /* Slightly adjust left position */
+  width: 650px; /* Increase width */
+  padding: 20px; /* Increase padding */
+  background: white;
+  border-radius: 10px;
+  box-shadow: 3px 3px 12px rgba(0, 0, 0, 0.2);
+  font-family: Arial, sans-serif;
+}
+
+.swimmer-text-bar h2 {
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  color: #333;
+}
+
+.swimmer-text-bar p {
+  font-size: 14px;
+  color: #666;
+}
+
+.load-button,
+.close-button,
+.add-button {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.load-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.close-button {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+.add-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.swimmer-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  max-height: 180px; /* Increase list height */
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #f9f9f9;
+  padding: 5px;
+}
+
+.swimmer-item {
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
+}
+
+.swimmer-form {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+}
+
+.swimmer-form input,
+.swimmer-form select {
+  padding: 10px;
+  margin: 6px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.swimmer-form h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
