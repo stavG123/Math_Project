@@ -96,3 +96,16 @@
   font-size: 18px;
   margin-bottom: 8px;
 }
+
+.Delete-Swimmer {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  background-color: #ff4d4d;
+  color: white;
+}

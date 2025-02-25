@@ -35,6 +35,18 @@ const Swimmer = () => {
   const closeSwimmers = () => {
     setIsListVisible(false);
   };
+  const DeleteSwimmer = async () => {
+    try {
+      const response = await axios.delete("http://127.0.0.1:5000/swimmer/delete_last");
+      console.log(response.data);
+      const deletedSwimmer = response.data.last_swimmer;
+      alert(`Swimmer Deleted:\nID: ${deletedSwimmer.Swimmer_ID}\nName: ${deletedSwimmer.Name}\nAge: ${deletedSwimmer.Age}\nGender: ${deletedSwimmer.Gender}`);
+
+      setIsListVisible(false);
+    } catch (error) {
+      alert(`Error: ${error.response.data.error}`);
+    }
+  };
 
   // ✅ Handle Input Change
   const handleChange = (e) => { //The function takes an event (e) as a parameter.
@@ -51,7 +63,14 @@ const Swimmer = () => {
       const response = await axios.post("http://127.0.0.1:5000/swimmer", newSwimmer, {
         headers: { "Content-Type": "application/json" }, // ✅ Required for Flask to parse JSON
       });
+
       console.log("Swimmer Added:", response.data);
+
+      // ✅ Reset input fields to empty values
+      setNewSwimmer({ name: "", age: "", gender: "" });
+
+      // ✅ Close the swimmers list
+      setIsListVisible(false);
     } catch (error) {
       console.error("Error adding swimmer:", error.response?.data || error.message);
     }
@@ -93,6 +112,7 @@ const Swimmer = () => {
           </select>
           <button type="submit" className="add-button">Add Swimmer</button>
         </form>
+        <button type="submit" className="Delete-Swimmer" onClick={DeleteSwimmer}>Delete Swimmer</button>
       </div>
     </div>
   );
