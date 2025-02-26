@@ -22,14 +22,21 @@ const Swimmer = () => {
   // ✅ Fetch Swimmers
   const fetchSwimmers = async () => {
     try {
-      // The await keyword pauses execution until the request is completed.
       const response = await axios.get("http://127.0.0.1:5000/swimmers");
-      setSwimmers(response.data);
+      
+      // ✅ Ensure frontend displays swimmers sorted by ID
+      const sortedSwimmers = response.data.sort((a, b) => a.Swimmer_ID - b.Swimmer_ID);
+      
+      setSwimmers(sortedSwimmers);
       setIsListVisible(true);
     } catch (error) {
       console.error("Error fetching swimmers:", error.response?.data || error.message);
     }
   };
+  
+  
+  
+  
 
   // ✅ Hide Swimmers
   const closeSwimmers = () => {

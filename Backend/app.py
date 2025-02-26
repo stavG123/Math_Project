@@ -27,56 +27,61 @@ class Swimmer(db.Model):
 # ✅ Route to Fetch Swimmers
 @app.route("/swimmers", methods=["GET"])
 def get_swimmers():
-    swimmers = Swimmer.query.order_by(Swimmer.swimmer_id.asc()).all()
+    swimmers = Swimmer.query.order_by(Swimmer.swimmer_id.asc()).all()  # ✅ Order by swimmer_id ASC
     data = [
         {"Swimmer_ID": s.swimmer_id, "Name": s.name, "Age": s.age, "Gender": s.gender}
         for s in swimmers
     ]
     return jsonify(data)
 
-# ✅ Route to Insert a Swimmer
 @app.route("/swimmer", methods=["POST"])
 def insert_swimmer():
     data = request.get_json()
-    last_swimmer = Swimmer.query.order_by(Swimmer.swimmer_id.desc()).first()
-    next_id = last_swimmer.swimmer_id + 1 if last_swimmer else 1  
 
+    # ✅ Fetch the highest swimmer_id in the table
+    max_id_result = db.session.execute(text("SELECT MAX(swimmer_id) FROM swimmers")).scalar()
+    
+    # ✅ If no swimmers exist yet, start with ID 1, else increment max_id by 1
+    next_id = 1 if max_id_result is None else max_id_result + 1
+
+    # ✅ Insert the new swimmer with the correct ID
     new_swimmer = Swimmer(swimmer_id=next_id, name=data["name"], age=data["age"], gender=data["gender"])
     db.session.add(new_swimmer)
     db.session.commit()
 
-    db.session.execute(text(f"ALTER SEQUENCE swimmers_swimmer_id_seq RESTART WITH {next_id + 1}"))
-    db.session.commit()
+    return jsonify({"message": "Swimmer added successfully!", "Swimmer_ID": new_swimmer.swimmer_id}), 201
 
-    return jsonify({"message": "Swimmer added successfully!", "Swimmer_ID": next_id}), 201
+
 
 # ✅ Route to Delete Last Swimmer
 @app.route("/swimmer/delete_last", methods=["DELETE"])
 def delete_swimmer():
-    global last_deleted_swimmer  # ✅ Allow modification of the global variable
+    global last_deleted_swimmer
 
+    # Find the last swimmer (highest swimmer_id)
     last_swimmer = Swimmer.query.order_by(Swimmer.swimmer_id.desc()).first()
 
     if last_swimmer:
         if last_swimmer.swimmer_id > 7:
-            last_deleted_swimmer = {  # ✅ Store deleted swimmer globally
+            # Store the deleted swimmer globally
+            last_deleted_swimmer = {
                 "Swimmer_ID": last_swimmer.swimmer_id,
                 "Name": last_swimmer.name,
                 "Age": last_swimmer.age,
                 "Gender": last_swimmer.gender,
             }
-            
-            print(f"Deleted Swimmer: {last_deleted_swimmer}")  # ✅ Print for debugging
 
+            print(f"Deleted Swimmer: {last_deleted_swimmer}")  # Debugging
+
+            # Delete the swimmer
             db.session.delete(last_swimmer)
             db.session.commit()
 
             return jsonify({"message": "Swimmer has been deleted", "last_swimmer": last_deleted_swimmer}), 200
-
         else:
             return jsonify({"error": "Cannot remove swimmer with ID ≤ 7"}), 403
-
-    return jsonify({"error": "No swimmers to delete"}), 404
+    else:
+        return jsonify({"error": "No swimmers to delete"}), 404
 
 # ✅ Route to Retrieve Last Deleted Swimmer
 @app.route("/swimmer/last_deleted", methods=["GET"])
