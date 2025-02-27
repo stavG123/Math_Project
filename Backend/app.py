@@ -16,7 +16,8 @@ db = SQLAlchemy(app)
 # ✅ Global variable to store last deleted swimmer
 last_deleted_swimmer = None
 
-# ✅ Swimmer Model
+
+#  Models DataBase
 class Swimmer(db.Model):
     __tablename__ = "swimmers"
     swimmer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -24,33 +25,90 @@ class Swimmer(db.Model):
     age = db.Column(db.Integer, nullable=False)
     gender = db.Column(db.String(10), nullable=False)
 
+
+class Practices(db.Model):  # Capitalized class name for convention
+    __tablename__ = "practices"
+    practice_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    date = db.Column(db.Date, nullable=False)
+
+
+class SwimmerPerformance(db.Model):
+    __tablename__ = "swimmer_performance"
+    swimmer_id = db.Column(
+        db.Integer, db.ForeignKey("swimmers.swimmer_id"), primary_key=True
+    )
+    practice_id = db.Column(
+        db.Integer, db.ForeignKey("practices.practice_id"), primary_key=True
+    )
+    backstroke = db.Column(db.Integer, nullable=False)
+    freestyle = db.Column(db.Integer, nullable=False)
+    butterfly = db.Column(db.Integer, nullable=False)
+    breaststroke = db.Column(db.Integer, nullable=False)
+    kick = db.Column(db.Integer, nullable=False)
+    total_time = db.Column(db.Integer, nullable=False)
+    total_distance = db.Column(db.Integer, nullable=False)
+    calories_burned = db.Column(db.Integer, nullable=False)  
+    splash_score = db.Column(db.Integer, nullable=False)
+    training_load = db.Column(db.Integer, nullable=False)
+    average_hr = db.Column(db.Integer, nullable=False)
+    max_hr = db.Column(db.Integer, nullable=False)
+
+
+@app.route("/swimmer/<int:swimmer_id>/calories", methods=["GET"])
+def get_swimmer_calories(swimmer_id):
+    performances = SwimmerPerformance.query.filter_by(swimmer_id=swimmer_id).all()
+    
+    data = [
+        {"Practice ID": p.practice_id, "Calories": p.calories_burned}
+        for p in performances
+    ]
+
+    return jsonify(data), 200
+
+
+
+
 # ✅ Route to Fetch Swimmers
 @app.route("/swimmers", methods=["GET"])
 def get_swimmers():
-    swimmers = Swimmer.query.order_by(Swimmer.swimmer_id.asc()).all()  # ✅ Order by swimmer_id ASC
+    swimmers = Swimmer.query.order_by(
+        Swimmer.swimmer_id.asc()
+    ).all()  # ✅ Order by swimmer_id ASC
     data = [
         {"Swimmer_ID": s.swimmer_id, "Name": s.name, "Age": s.age, "Gender": s.gender}
         for s in swimmers
     ]
     return jsonify(data)
 
+
 @app.route("/swimmer", methods=["POST"])
 def insert_swimmer():
     data = request.get_json()
 
     # ✅ Fetch the highest swimmer_id in the table
-    max_id_result = db.session.execute(text("SELECT MAX(swimmer_id) FROM swimmers")).scalar()
-    
+    max_id_result = db.session.execute(
+        text("SELECT MAX(swimmer_id) FROM swimmers")
+    ).scalar()
+
     # ✅ If no swimmers exist yet, start with ID 1, else increment max_id by 1
     next_id = 1 if max_id_result is None else max_id_result + 1
 
     # ✅ Insert the new swimmer with the correct ID
-    new_swimmer = Swimmer(swimmer_id=next_id, name=data["name"], age=data["age"], gender=data["gender"])
+    new_swimmer = Swimmer(
+        swimmer_id=next_id, name=data["name"], age=data["age"], gender=data["gender"]
+    )
     db.session.add(new_swimmer)
     db.session.commit()
 
-    return jsonify({"message": "Swimmer added successfully!", "Swimmer_ID": new_swimmer.swimmer_id}), 201
-
+    return (
+        jsonify(
+            {
+                "message": "Swimmer added successfully!",
+                "Swimmer_ID": new_swimmer.swimmer_id,
+            }
+        ),
+        201,
+    )
 
 
 # ✅ Route to Delete Last Swimmer
@@ -77,11 +135,20 @@ def delete_swimmer():
             db.session.delete(last_swimmer)
             db.session.commit()
 
-            return jsonify({"message": "Swimmer has been deleted", "last_swimmer": last_deleted_swimmer}), 200
+            return (
+                jsonify(
+                    {
+                        "message": "Swimmer has been deleted",
+                        "last_swimmer": last_deleted_swimmer,
+                    }
+                ),
+                200,
+            )
         else:
             return jsonify({"error": "Cannot remove swimmer with ID ≤ 7"}), 403
     else:
         return jsonify({"error": "No swimmers to delete"}), 404
+
 
 # ✅ Route to Retrieve Last Deleted Swimmer
 @app.route("/swimmer/last_deleted", methods=["GET"])
@@ -90,6 +157,10 @@ def get_last_deleted_swimmer():
         return jsonify({"last_deleted_swimmer": last_deleted_swimmer}), 200
     else:
         return jsonify({"error": "No swimmer has been deleted yet"}), 404
+    
+
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
