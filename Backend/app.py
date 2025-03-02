@@ -54,16 +54,25 @@ class SwimmerPerformance(db.Model):
     max_hr = db.Column(db.Integer, nullable=False)
 
 
-@app.route("/swimmer/<int:swimmer_id>/calories", methods=["GET"])
-def get_swimmer_calories(swimmer_id):
-    performances = SwimmerPerformance.query.filter_by(swimmer_id=swimmer_id).all()
-    
-    data = [
-        {"Practice ID": p.practice_id, "Calories": p.calories_burned}
-        for p in performances
-    ]
+@app.route("/swimmer/<int:swimmer_id>/top_distances", methods=["GET"])
+def get_swimmer_top_distances(swimmer_id):
+    performances = (
+        db.session.query(SwimmerPerformance.total_distance, Practices.date)
+        .join(Practices, SwimmerPerformance.practice_id == Practices.practice_id)  # ✅ Join Practices table to get the date
+        .filter(SwimmerPerformance.swimmer_id == swimmer_id)
+        .order_by(SwimmerPerformance.total_distance.desc())
+        .limit(5)
+        .all()
+    )
+
+    if not performances:
+        return jsonify({"message": "No data found for this swimmer"}), 404
+
+    # ✅ Format the response to include Date
+    data = [{"Date": p.date.strftime("%Y-%m-%d"), "Distance": p.total_distance} for p in performances]
 
     return jsonify(data), 200
+
 
 
 
@@ -84,6 +93,15 @@ def get_swimmers():
 @app.route("/swimmer", methods=["POST"])
 def insert_swimmer():
     data = request.get_json()
+
+    # ✅ Check if swimmer already exists
+    existing_swimmer = db.session.execute(
+        text("SELECT * FROM swimmers WHERE name = :name AND age = :age AND gender = :gender"),
+        {"name": data["name"], "age": data["age"], "gender": data["gender"]}
+    ).fetchone()
+
+    if existing_swimmer:
+        return jsonify({"message": "Swimmer already exists!", "Swimmer_ID": existing_swimmer.swimmer_id}), 409
 
     # ✅ Fetch the highest swimmer_id in the table
     max_id_result = db.session.execute(
@@ -109,6 +127,7 @@ def insert_swimmer():
         ),
         201,
     )
+
 
 
 # ✅ Route to Delete Last Swimmer

@@ -1,20 +1,21 @@
 /* Swimmer.css */
 #root {
-  width: 100vw; /* Make it full width */
-  min-height: 60vh; /* Ensure it takes the full height of the viewport */
+  width: 100vw; /* Full width */
+  min-height: 100vh; /* Full viewport height */
   display: flex;
-  flex-direction: column; /* Stack children elements properly */
-  align-items: center; /* Center horizontally */
-  justify-content: flex-start; /* Align content towards the top */
-  padding-bottom: 50px; /* Ensure spacing at the bottom */
-  background-color: #f8f9fa; /* Optional: Light background */
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-bottom: 50px;
+  background-color: #f8f9fa; /* Light background */
 }
+
 .swimmer-container {
   position: relative;
   top: 100px; /* Move it down to avoid navbar overlap */
   left: 10px; /* Slightly adjust left position */
-  width: 650px; /* Increase width */
-  padding: 20px; /* Increase padding */
+  width: 1000px; /* Increase width */
+  padding: 25px; /* Increase padding */
   background: white;
   border-radius: 10px;
   box-shadow: 3px 3px 12px rgba(0, 0, 0, 0.2);
@@ -108,4 +109,56 @@
   font-size: 14px;
   background-color: #ff4d4d;
   color: white;
+}
+
+
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+.Swimmer-drop {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.Swimmer-drop select {
+  width: 80%; /* Adjust width */
+  padding: 12px;
+  font-size: 16px;
+  border: 2px solid #007bff; /* Blue border */
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease-in-out;
+}
+
+.Swimmer-drop select:focus {
+  border-color: #0056b3; /* Darker blue on focus */
+  box-shadow: 0px 0px 8px rgba(0, 91, 187, 0.5);
+}
+
+.Swimmer-drop select:hover {
+  background-color: #f8f9fa;
+}
+
+.Swimmer-drop option {
+  padding: 10px;
+  font-size: 14px;
 }

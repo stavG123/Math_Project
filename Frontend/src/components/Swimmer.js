@@ -1,42 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "./CSS/Swimmer.css"; // Import styling
+import { useTable } from "react-table"; // ✅ Import react-table
+import "./CSS/Swimmer.css";
 
 const Swimmer = () => {
-  // Initial State: The swimmers list starts as an empty array ([]), meaning there are no swimmers initially.
-  /* 
-     1️⃣ When the component first renders, `swimmers` is set to an empty array.
-     2️⃣ When new swimmer data is fetched from the Flask backend, `setSwimmers` updates `swimmers` with the fetched data.
-     3️⃣ The component re-renders whenever `swimmers` is updated, displaying the new list.
-  */
   const [swimmers, setSwimmers] = useState([]);
-  // Initial State: The list is hidden (`false`) when the component first renders.
-  /* 
-     1️⃣ When the component first renders, `isListVisible` is set to `false`, meaning the list is hidden.
-     2️⃣ `setIsListVisible` updates `isListVisible` when needed, toggling the visibility of the swimmers' list.
-     3️⃣ The component re-renders whenever `isListVisible` is updated, showing or hiding the list accordingly.
-  */
   const [isListVisible, setIsListVisible] = useState(false);
   const [newSwimmer, setNewSwimmer] = useState({ name: "", age: "", gender: "" });
+  const [selectedSwimmerId, setSelectedSwimmerId] = useState("");
+  const [topDistances, setTopDistances] = useState([]);
+  const [selectedSwimmer, setSelectedSwimmer] = useState(null);
+
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: "Rank",
+        accessor: (row, index) => index + 1, // Auto number ranking
+      },
+      {
+        Header: "Distance (Yards)",
+        accessor: "Distance",
+      },
+    ],
+    []
+  );
+
+
+
 
   // ✅ Fetch Swimmers
   const fetchSwimmers = async () => {
     try {
       const response = await axios.get("http://127.0.0.1:5000/swimmers");
-      
-      // ✅ Ensure frontend displays swimmers sorted by ID
       const sortedSwimmers = response.data.sort((a, b) => a.Swimmer_ID - b.Swimmer_ID);
-      
       setSwimmers(sortedSwimmers);
-      setIsListVisible(true);
+      setIsListVisible(true);  // Show the list only when "Load Swimmers" is clicked
     } catch (error) {
       console.error("Error fetching swimmers:", error.response?.data || error.message);
     }
   };
-  
-  
-  
-  
+
+  const handleSwimmerSelect = async (e) => {
+    const swimmerId = e.target.value;
+    setSelectedSwimmerId(swimmerId);
+
+    const swimmer = swimmers.find((s) => s.Swimmer_ID.toString() === swimmerId);
+    setSelectedSwimmer(swimmer); 
+
+    // ✅ Fetch top 5 distances from the backend
+    try {
+      const response = await axios.get(`http://127.0.0.1:5000/swimmer/${swimmerId}/top_distances`);
+      setTopDistances(response.data);
+    } catch (error) {
+      console.error("Error fetching top distances:", error.response?.data || error.message);
+      setTopDistances([]); // Reset if error
+    }
+  };
+
+
+
 
   // ✅ Hide Swimmers
   const closeSwimmers = () => {
@@ -80,24 +102,34 @@ const Swimmer = () => {
       setIsListVisible(false);
     } catch (error) {
       console.error("Error adding swimmer:", error.response?.data || error.message);
+      setNewSwimmer({ name: "", age: "", gender: "" });
+      setIsListVisible(false);
+      alert("Error adding swimmer, Swimmer Already Exists")
+
     }
+
   };
 
   return (
     <div className="swimmer-container">
+      {/* Header Section */}
       <div className="swimmer-text-bar">
         <h2>Swimmer Check</h2>
         <p>Select a swimmer from the database and view their data.</p>
 
-        {/* ✅ Buttons */}
+        {/* Load/Close Swimmers Button */}
         {!isListVisible ? (
-          <button className="load-button" onClick={fetchSwimmers}>Load Swimmers</button>
+          <button className="load-button" onClick={fetchSwimmers}>
+            Load Swimmers
+          </button>
         ) : (
-          <button className="close-button" onClick={closeSwimmers}>Close Swimmers</button>
+          <button className="close-button" onClick={closeSwimmers}>
+            Close Swimmers
+          </button>
         )}
 
-        {/* ✅ Swimmers List */}
-        {isListVisible && (//It ensures that the element inside the parentheses only renders when isListVisible is true
+        {/* Swimmer List */}
+        {isListVisible && (
           <ul className="swimmer-list">
             {swimmers.map((swimmer, index) => (
               <li className="swimmer-item" key={index}>
@@ -107,11 +139,25 @@ const Swimmer = () => {
           </ul>
         )}
 
-        {/* ✅ Insert Swimmer Form */}
+        {/* Insert New Swimmer Form */}
         <form className="swimmer-form" onSubmit={insertSwimmer}>
           <h3>Add a New Swimmer</h3>
-          <input type="text" name="name" placeholder="Name" value={newSwimmer.name} onChange={handleChange} required />
-          <input type="number" name="age" placeholder="Age" value={newSwimmer.age} onChange={handleChange} required />
+          <input
+            type="text"
+            name="name"
+            placeholder="Name"
+            value={newSwimmer.name}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="number"
+            name="age"
+            placeholder="Age"
+            value={newSwimmer.age}
+            onChange={handleChange}
+            required
+          />
           <select name="gender" value={newSwimmer.gender} onChange={handleChange} required>
             <option value="">Select Gender</option>
             <option value="Male">Male</option>
@@ -119,8 +165,49 @@ const Swimmer = () => {
           </select>
           <button type="submit" className="add-button">Add Swimmer</button>
         </form>
-        <button type="submit" className="Delete-Swimmer" onClick={DeleteSwimmer}>Delete Swimmer</button>
+
+        {/* Delete Swimmer Button */}
+        <button className="Delete-Swimmer" onClick={DeleteSwimmer}>
+          Delete Swimmer
+        </button>
       </div>
+
+      {/* Swimmer Selection Dropdown */}
+      <div className="Swimmer-drop">
+        <select value={selectedSwimmerId} onChange={handleSwimmerSelect}>
+          <option value="">Choose a swimmer</option>
+          {swimmers.map((swimmer) => (
+            <option key={swimmer.Swimmer_ID} value={swimmer.Swimmer_ID}>
+              {swimmer.Name} (Age: {swimmer.Age}, Gender: {swimmer.Gender})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Top 5 Distances Table */}
+      {topDistances.length > 0 && (
+        <div className="table-container">
+          <h3>Top 5 Distances</h3>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Distance (Yards)</th>
+                <th>Date</th> 
+              </tr>
+            </thead>
+            <tbody>
+              {topDistances.map((row, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{row.Distance}</td>
+                  <td>{row.Date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
