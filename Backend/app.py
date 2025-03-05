@@ -53,13 +53,13 @@ class SwimmerPerformance(db.Model):
     average_hr = db.Column(db.Integer, nullable=False)
     max_hr = db.Column(db.Integer, nullable=False)
 
-
+# GET request is fetching data directly from your PostgreSQL database using SQLAlchemy
 @app.route("/swimmer/<int:swimmer_id>/top_distances", methods=["GET"])
 def get_swimmer_top_distances(swimmer_id):
     performances = (
         db.session.query(SwimmerPerformance.total_distance, Practices.date)
         .join(Practices, SwimmerPerformance.practice_id == Practices.practice_id)  # ✅ Join Practices table to get the date
-        .filter(SwimmerPerformance.swimmer_id == swimmer_id)
+        .filter(SwimmerPerformance.swimmer_id == swimmer_id) # Filter by swimmer ID 
         .order_by(SwimmerPerformance.total_distance.desc())
         .limit(5)
         .all()
@@ -69,10 +69,41 @@ def get_swimmer_top_distances(swimmer_id):
         return jsonify({"message": "No data found for this swimmer"}), 404
 
     # ✅ Format the response to include Date
-    data = [{"Date": p.date.strftime("%Y-%m-%d"), "Distance": p.total_distance} for p in performances]
+    data = [{"Date": p.date.strftime("%Y-%m-%d"), "Distance": p.total_distance,} for p in performances]
 
     return jsonify(data), 200
 
+
+@app.route("/swimmer/<int:swimmer_id>/calories_burned", methods=["GET"])
+def get_swimmer_Calories_Burned(swimmer_id):
+    performances = (
+        db.session.query(SwimmerPerformance.calories_burned, Practices.date,SwimmerPerformance.total_time)
+        .join(Practices, SwimmerPerformance.practice_id == Practices.practice_id)  # ✅ Join Practices table to get the date
+        .filter(SwimmerPerformance.swimmer_id == swimmer_id) # join on SQL 
+        .order_by(SwimmerPerformance.calories_burned.desc())
+        .limit(5)
+        .all()
+    )
+    if not performances:
+        return jsonify({"message": "No data found for this swimmer"}), 404
+    data = [{"Date": p.date.strftime("%Y-%m-%d"), "Calories_Burned": p.calories_burned,"total_time": p.total_time} for p in performances]
+    return jsonify(data), 200
+
+    
+@app.route("/swimmer/<int:swimmer_id>/splash_score", methods=["GET"])
+def get_swimmer_splash_score(swimmer_id):
+    performances = (
+         db.session.query(SwimmerPerformance.splash_score,SwimmerPerformance.training_load,SwimmerPerformance.max_hr,SwimmerPerformance.average_hr,Practices.date)
+        .join(Practices, SwimmerPerformance.practice_id == Practices.practice_id)  # ✅ Join Practices table to get the date
+        .filter(SwimmerPerformance.swimmer_id == swimmer_id) # join on SQL 
+        .order_by(SwimmerPerformance.splash_score.desc())
+        .limit(5)
+        .all()
+    )
+    if not performances:
+        return jsonify({"message": "No data found for this swimmer"}), 404
+    data = [{"splash_score": p.splash_score,"training_load": p.training_load,"max_hr":p.max_hr,"average_hr":p.average_hr,"Date": p.date.strftime("%Y-%m-%d")} for p in performances]
+    return jsonify(data), 200
 
 
 

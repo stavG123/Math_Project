@@ -9,6 +9,8 @@ const Swimmer = () => {
   const [newSwimmer, setNewSwimmer] = useState({ name: "", age: "", gender: "" });
   const [selectedSwimmerId, setSelectedSwimmerId] = useState("");
   const [topDistances, setTopDistances] = useState([]);
+  const [topCal, setTopCal] = useState([]);
+  const [topsplash, setTopsplash] = useState([]);
   const [selectedSwimmer, setSelectedSwimmer] = useState(null);
 
   const columns = React.useMemo(
@@ -21,9 +23,40 @@ const Swimmer = () => {
         Header: "Distance (Yards)",
         accessor: "Distance",
       },
+      {
+        Header: "Calories Burned",
+        accessor: "Calories_Burned",
+      },
+      {
+        Header: "Swimming Time",
+        accessor: "total_time",
+      },
+      {
+      Header: "splash_score",
+      accessor:"splash_score",
+      },
+      {
+        Header: "training_load",
+        accessor:"training_load"
+      },
+      {
+        Header:"max_hr",
+        accessor:"max_hr"
+      },
+      {
+         Header:"average_hr",
+        accessor:"average_hr"
+      },
+      {
+        Header:"Date",
+        accessor:"Date"
+
+      }
+
     ],
     []
   );
+  
 
 
 
@@ -43,19 +76,39 @@ const Swimmer = () => {
   const handleSwimmerSelect = async (e) => {
     const swimmerId = e.target.value;
     setSelectedSwimmerId(swimmerId);
-
+  
+    if (swimmerId === "") {
+      // ✅ Reset data when no swimmer is selected
+      setTopDistances([]);
+      setTopCal([]);
+      setTopsplash([]);
+      setSelectedSwimmer(null);
+      return;
+    }
+  
     const swimmer = swimmers.find((s) => s.Swimmer_ID.toString() === swimmerId);
-    setSelectedSwimmer(swimmer); 
-
+    setSelectedSwimmer(swimmer);
+  
     // ✅ Fetch top 5 distances from the backend
     try {
       const response = await axios.get(`http://127.0.0.1:5000/swimmer/${swimmerId}/top_distances`);
       setTopDistances(response.data);
+  
+      const response2 = await axios.get(`http://127.0.0.1:5000/swimmer/${swimmerId}/calories_burned`);
+      setTopCal(response2.data);
+
+      const response3 = await axios.get(`http://127.0.0.1:5000/swimmer/${swimmerId}/splash_score`);
+      setTopsplash(response3.data);
+
+
     } catch (error) {
       console.error("Error fetching top distances:", error.response?.data || error.message);
       setTopDistances([]); // Reset if error
+      setTopCal([]);
+      setTopsplash([]);
     }
   };
+  
 
 
 
@@ -174,15 +227,16 @@ const Swimmer = () => {
 
       {/* Swimmer Selection Dropdown */}
       <div className="Swimmer-drop">
-        <select value={selectedSwimmerId} onChange={handleSwimmerSelect}>
-          <option value="">Choose a swimmer</option>
-          {swimmers.map((swimmer) => (
-            <option key={swimmer.Swimmer_ID} value={swimmer.Swimmer_ID}>
-              {swimmer.Name} (Age: {swimmer.Age}, Gender: {swimmer.Gender})
-            </option>
-          ))}
-        </select>
-      </div>
+  <select value={selectedSwimmerId} onChange={handleSwimmerSelect}>
+    <option value="">Choose a swimmer</option> {/* ✅ Ensure this has an empty value */}
+    {swimmers.map((swimmer) => (
+      <option key={swimmer.Swimmer_ID} value={swimmer.Swimmer_ID}>
+        {swimmer.Name} (Age: {swimmer.Age}, Gender: {swimmer.Gender})
+      </option>
+    ))}
+  </select>
+</div>
+
 
       {/* Top 5 Distances Table */}
       {topDistances.length > 0 && (
@@ -193,7 +247,7 @@ const Swimmer = () => {
               <tr>
                 <th>Rank</th>
                 <th>Distance (Yards)</th>
-                <th>Date</th> 
+                <th>Date</th>
               </tr>
             </thead>
             <tbody>
@@ -208,6 +262,65 @@ const Swimmer = () => {
           </table>
         </div>
       )}
+
+      {topCal.length > 0 && (
+        <div className="table-container">
+          <h3>Top 5 Calories with Time (Calories Highest)</h3>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Calories Burned</th>
+                <th>Swimming Time</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topCal.map((row, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{row.Calories_Burned} </td>
+                  <td>{row.total_time} Min</td>
+                  <td>{row.Date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+{topsplash.length > 0 && (
+        <div className="table-container">
+          <h3>Top 5 splash score </h3>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Splash Score (Swimmer’s Efficiency)</th>
+                <th>Training Load (the intensity and volume of a swimmer)</th>
+                <th>Max Hr</th>
+                <th>AVG Hr</th>
+                <th>Date</th>
+                
+              </tr>
+            </thead>
+            <tbody>
+              {topsplash.map((row, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{row.splash_score} </td>
+                  <td>{row.training_load} </td>
+                  <td>{row.max_hr} </td>
+                  <td>{row.average_hr} </td>
+                  <td>{row.Date} </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+
     </div>
   );
 };
