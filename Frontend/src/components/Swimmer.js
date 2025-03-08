@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useTable } from "react-table"; // ✅ Import react-table
 import "./CSS/Swimmer.css";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
+
+
+
+
 
 const Swimmer = () => {
   const [swimmers, setSwimmers] = useState([]);
@@ -12,6 +17,10 @@ const Swimmer = () => {
   const [topCal, setTopCal] = useState([]);
   const [topsplash, setTopsplash] = useState([]);
   const [selectedSwimmer, setSelectedSwimmer] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const [calorieChartData, setCalorieChartData] = useState([]);
+  const [radarChartData, setRadarChartData] = useState([]);
+
 
   const columns = React.useMemo(
     () => [
@@ -32,32 +41,30 @@ const Swimmer = () => {
         accessor: "total_time",
       },
       {
-      Header: "splash_score",
-      accessor:"splash_score",
+        Header: "splash_score",
+        accessor: "splash_score",
       },
       {
         Header: "training_load",
-        accessor:"training_load"
+        accessor: "training_load"
       },
       {
-        Header:"max_hr",
-        accessor:"max_hr"
+        Header: "max_hr",
+        accessor: "max_hr"
       },
       {
-         Header:"average_hr",
-        accessor:"average_hr"
+        Header: "average_hr",
+        accessor: "average_hr"
       },
       {
-        Header:"Date",
-        accessor:"Date"
+        Header: "Date",
+        accessor: "Date"
 
       }
 
     ],
     []
   );
-  
-
 
 
 
@@ -76,7 +83,7 @@ const Swimmer = () => {
   const handleSwimmerSelect = async (e) => {
     const swimmerId = e.target.value;
     setSelectedSwimmerId(swimmerId);
-  
+
     if (swimmerId === "") {
       // ✅ Reset data when no swimmer is selected
       setTopDistances([]);
@@ -85,20 +92,44 @@ const Swimmer = () => {
       setSelectedSwimmer(null);
       return;
     }
-  
+
     const swimmer = swimmers.find((s) => s.Swimmer_ID.toString() === swimmerId);
     setSelectedSwimmer(swimmer);
-  
+
     // ✅ Fetch top 5 distances from the backend
     try {
       const response = await axios.get(`http://127.0.0.1:5000/swimmer/${swimmerId}/top_distances`);
       setTopDistances(response.data);
-  
+
       const response2 = await axios.get(`http://127.0.0.1:5000/swimmer/${swimmerId}/calories_burned`);
       setTopCal(response2.data);
 
       const response3 = await axios.get(`http://127.0.0.1:5000/swimmer/${swimmerId}/splash_score`);
       setTopsplash(response3.data);
+
+      const formattedChartData = response.data.map((item) => ({
+        date: item.Date,
+        distance: item.Distance
+      }));
+      setChartData(formattedChartData);
+      const formattedCalorieChartData = response2.data.map((item) => ({
+        date: item.Date,
+        calories: item.Calories_Burned,
+        time: item.total_time
+      }));
+      setCalorieChartData(formattedCalorieChartData);
+
+      const formattedRadarData = response3.data.map((item) => ({
+        date: item.Date,
+        SplashScore: item.splash_score,
+        TrainingLoad: item.training_load,
+        MaxHR: item.max_hr,
+        AvgHR: item.average_hr,
+      }));
+
+
+
+      setRadarChartData(formattedRadarData);
 
 
     } catch (error) {
@@ -108,7 +139,7 @@ const Swimmer = () => {
       setTopsplash([]);
     }
   };
-  
+
 
 
 
@@ -162,6 +193,7 @@ const Swimmer = () => {
     }
 
   };
+
 
   return (
     <div className="swimmer-container">
@@ -227,15 +259,15 @@ const Swimmer = () => {
 
       {/* Swimmer Selection Dropdown */}
       <div className="Swimmer-drop">
-  <select value={selectedSwimmerId} onChange={handleSwimmerSelect}>
-    <option value="">Choose a swimmer</option> {/* ✅ Ensure this has an empty value */}
-    {swimmers.map((swimmer) => (
-      <option key={swimmer.Swimmer_ID} value={swimmer.Swimmer_ID}>
-        {swimmer.Name} (Age: {swimmer.Age}, Gender: {swimmer.Gender})
-      </option>
-    ))}
-  </select>
-</div>
+        <select value={selectedSwimmerId} onChange={handleSwimmerSelect}>
+          <option value="">Choose a swimmer</option> {/* ✅ Ensure this has an empty value */}
+          {swimmers.map((swimmer) => (
+            <option key={swimmer.Swimmer_ID} value={swimmer.Swimmer_ID}>
+              {swimmer.Name} (Age: {swimmer.Age}, Gender: {swimmer.Gender})
+            </option>
+          ))}
+        </select>
+      </div>
 
 
       {/* Top 5 Distances Table */}
@@ -289,7 +321,7 @@ const Swimmer = () => {
         </div>
       )}
 
-{topsplash.length > 0 && (
+      {topsplash.length > 0 && (
         <div className="table-container">
           <h3>Top 5 splash score </h3>
           <table className="table">
@@ -301,7 +333,7 @@ const Swimmer = () => {
                 <th>Max Hr</th>
                 <th>AVG Hr</th>
                 <th>Date</th>
-                
+
               </tr>
             </thead>
             <tbody>
@@ -319,10 +351,59 @@ const Swimmer = () => {
           </table>
         </div>
       )}
+      {chartData.length > 0 && (
+        <div className="chart-container">
+          <h3>Top 5 Distances Over Time Graph</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="distance" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
+      {calorieChartData.length > 0 && (
+        <div className="chart-container">
+          <h3>Calories Burned vs. Swimming Time Graph</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={calorieChartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="calories" fill="#ff7300" name="Calories Burned" />
+              <Bar dataKey="time" fill="#387908" name="Swimming Time (Min)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      {radarChartData.length > 0 && (
+        <div className="chart-container">
+          <h3>Swimmer Performance Metrics Graph</h3>
+          <ResponsiveContainer width="100%" height={400}>
+            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarChartData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="date" />  {/* Date as categories */}
+              <PolarRadiusAxis />
 
+              {/* Different colors for each metric */}
+              <Radar name="Splash Score" dataKey="SplashScore" stroke="#FF5733" fill="#FF5733" fillOpacity={0.6} />
+              <Radar name="Training Load" dataKey="TrainingLoad" stroke="#33FF57" fill="#33FF57" fillOpacity={0.6} />
+              <Radar name="Max HR" dataKey="MaxHR" stroke="#3357FF" fill="#3357FF" fillOpacity={0.6} />
+              <Radar name="Avg HR" dataKey="AvgHR" stroke="#000000" fill="#000000" fillOpacity={0.6} /> {/* Black for Avg HR */}
+              <Legend />
+            </RadarChart>
+          </ResponsiveContainer>
+
+        </div>
+      )}
     </div>
   );
 };
 
-export default Swimmer;
+export default Swimmer; 
