@@ -18,6 +18,7 @@ const Navbar = () => {
           <ul className="nav-links">
             <li><Link to="/">Home</Link></li>  {/* Uses React Router navigation */}
             <li><Link to="/swimmer">Swimmer Check</Link></li> 
+            <li><Link to="/ML">ML</Link></li>
           </ul>
         </div>
 

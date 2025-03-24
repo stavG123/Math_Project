@@ -2,6 +2,11 @@ from flask import Flask, request, jsonify  # type: ignore
 from flask_sqlalchemy import SQLAlchemy  # type: ignore
 from flask_cors import CORS  # type: ignore
 from sqlalchemy import text  # type: ignore
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import numpy as np
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -210,6 +215,36 @@ def get_last_deleted_swimmer():
     
 
 
+@app.route("/predict", methods=["POST"])
+def predict_total_distance():
+    data = request.get_json()
+
+    try:
+        training_load = data["Training_Load"]
+        max_hr = data["Max_HR"]
+        calories_burned = data["Calories_Burned"]
+
+        # Load all swimmer data
+        performances = SwimmerPerformance.query.all()
+
+        # Extract features and target
+        X = np.array([
+            [p.training_load, p.max_hr, p.calories_burned]
+            for p in performances
+        ])
+        y = np.array([p.total_distance for p in performances])
+
+        # Train model
+        model = LinearRegression()
+        model.fit(X, y)
+
+        # Predict
+        prediction = model.predict([[training_load, max_hr, calories_burned]])[0]
+
+        return jsonify({"Predicted_Total_Distance": round(prediction, 2)})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 if __name__ == "__main__":
