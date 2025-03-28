@@ -9,6 +9,8 @@ const ML = () => {
   });
 
   const [result, setResult] = useState(null);
+  const [gptQuestion, setGptQuestion] = useState("");
+  const [gptAnswer, setGptAnswer] = useState("");
 
   const handleChange = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -28,7 +30,18 @@ const ML = () => {
     });
 
     const data = await response.json();
+    console.log("GPT response:", data);
     setResult(data.Predicted_Total_Distance);
+  };
+
+  const handleAsk = async () => {
+    const response = await fetch("http://localhost:5000/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: gptQuestion }),
+    });
+    const data = await response.json();
+    setGptAnswer(data.answer);
   };
 
   return (
@@ -54,11 +67,13 @@ const ML = () => {
           After training and evaluating all models using standard metrics like Root Mean Squared
           Error (RMSE) and R² Score, the Linear Regression model yielded the most accurate and
           interpretable results. (95%)
-          <br /> <br />
-          In the Phlex app, Training Load is a numerical score that reflects how much physical stress your body experiences during a swim workout.
+          <br /><br />
+          In the Phlex app, Training Load is a numerical score that reflects how much physical stress
+          your body experiences during a swim workout. (0-50 value)
         </p>
       </div>
 
+      {/* Prediction Section */}
       <div className="swimmer-inputs">
         <h3>Distance Prediction Based on Training Metrics</h3>
         <form onSubmit={handleSubmit}>
@@ -98,6 +113,25 @@ const ML = () => {
         {result !== null && (
           <p style={{ marginTop: "10px", fontWeight: "bold" }}>
             Predicted Total Distance: {result} yards
+          </p>
+        )}
+      </div>
+
+      {/* GPT Q&A Section */}
+      <div className="swimmer-inputs" style={{ marginTop: "40px" }}>
+        <h3>Ask the Intelligent Assistant About Swimmer Data</h3>
+        <input
+          type="text"
+          placeholder="e.g., Who burned the most calories?"
+          value={gptQuestion}
+          onChange={(e) => setGptQuestion(e.target.value)}
+          className="input-box"
+        />
+        <button onClick={handleAsk} className="submit-button">Ask</button>
+
+        {gptAnswer && (
+          <p style={{ marginTop: "10px", fontWeight: "bold" }}>
+            Answer: {gptAnswer}
           </p>
         )}
       </div>

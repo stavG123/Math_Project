@@ -6,6 +6,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import numpy as np
+from openai import OpenAI
+import os
+from sentence_transformers import SentenceTransformer  # type: ignore
+import faiss, pandas as pd  # type: ignore
 
 
 app = Flask(__name__)
@@ -52,19 +56,22 @@ class SwimmerPerformance(db.Model):
     kick = db.Column(db.Integer, nullable=False)
     total_time = db.Column(db.Integer, nullable=False)
     total_distance = db.Column(db.Integer, nullable=False)
-    calories_burned = db.Column(db.Integer, nullable=False)  
+    calories_burned = db.Column(db.Integer, nullable=False)
     splash_score = db.Column(db.Integer, nullable=False)
     training_load = db.Column(db.Integer, nullable=False)
     average_hr = db.Column(db.Integer, nullable=False)
     max_hr = db.Column(db.Integer, nullable=False)
+
 
 # GET request is fetching data directly from your PostgreSQL database using SQLAlchemy
 @app.route("/swimmer/<int:swimmer_id>/top_distances", methods=["GET"])
 def get_swimmer_top_distances(swimmer_id):
     performances = (
         db.session.query(SwimmerPerformance.total_distance, Practices.date)
-        .join(Practices, SwimmerPerformance.practice_id == Practices.practice_id)  # ✅ Join Practices table to get the date
-        .filter(SwimmerPerformance.swimmer_id == swimmer_id) # Filter by swimmer ID 
+        .join(
+            Practices, SwimmerPerformance.practice_id == Practices.practice_id
+        )  # ✅ Join Practices table to get the date
+        .filter(SwimmerPerformance.swimmer_id == swimmer_id)  # Filter by swimmer ID
         .order_by(SwimmerPerformance.total_distance.desc())
         .limit(5)
         .all()
@@ -74,7 +81,13 @@ def get_swimmer_top_distances(swimmer_id):
         return jsonify({"message": "No data found for this swimmer"}), 404
 
     # ✅ Format the response to include Date
-    data = [{"Date": p.date.strftime("%Y-%m-%d"), "Distance": p.total_distance,} for p in performances]
+    data = [
+        {
+            "Date": p.date.strftime("%Y-%m-%d"),
+            "Distance": p.total_distance,
+        }
+        for p in performances
+    ]
 
     return jsonify(data), 200
 
@@ -82,35 +95,63 @@ def get_swimmer_top_distances(swimmer_id):
 @app.route("/swimmer/<int:swimmer_id>/calories_burned", methods=["GET"])
 def get_swimmer_Calories_Burned(swimmer_id):
     performances = (
-        db.session.query(SwimmerPerformance.calories_burned, Practices.date,SwimmerPerformance.total_time)
-        .join(Practices, SwimmerPerformance.practice_id == Practices.practice_id)  # ✅ Join Practices table to get the date
-        .filter(SwimmerPerformance.swimmer_id == swimmer_id) # join on SQL 
+        db.session.query(
+            SwimmerPerformance.calories_burned,
+            Practices.date,
+            SwimmerPerformance.total_time,
+        )
+        .join(
+            Practices, SwimmerPerformance.practice_id == Practices.practice_id
+        )  # ✅ Join Practices table to get the date
+        .filter(SwimmerPerformance.swimmer_id == swimmer_id)  # join on SQL
         .order_by(SwimmerPerformance.calories_burned.desc())
         .limit(5)
         .all()
     )
     if not performances:
         return jsonify({"message": "No data found for this swimmer"}), 404
-    data = [{"Date": p.date.strftime("%Y-%m-%d"), "Calories_Burned": p.calories_burned,"total_time": p.total_time} for p in performances]
+    data = [
+        {
+            "Date": p.date.strftime("%Y-%m-%d"),
+            "Calories_Burned": p.calories_burned,
+            "total_time": p.total_time,
+        }
+        for p in performances
+    ]
     return jsonify(data), 200
 
-    
+
 @app.route("/swimmer/<int:swimmer_id>/splash_score", methods=["GET"])
 def get_swimmer_splash_score(swimmer_id):
     performances = (
-         db.session.query(SwimmerPerformance.splash_score,SwimmerPerformance.training_load,SwimmerPerformance.max_hr,SwimmerPerformance.average_hr,Practices.date)
-        .join(Practices, SwimmerPerformance.practice_id == Practices.practice_id)  # ✅ Join Practices table to get the date
-        .filter(SwimmerPerformance.swimmer_id == swimmer_id) # join on SQL 
+        db.session.query(
+            SwimmerPerformance.splash_score,
+            SwimmerPerformance.training_load,
+            SwimmerPerformance.max_hr,
+            SwimmerPerformance.average_hr,
+            Practices.date,
+        )
+        .join(
+            Practices, SwimmerPerformance.practice_id == Practices.practice_id
+        )  # ✅ Join Practices table to get the date
+        .filter(SwimmerPerformance.swimmer_id == swimmer_id)  # join on SQL
         .order_by(SwimmerPerformance.splash_score.desc())
         .limit(5)
         .all()
     )
     if not performances:
         return jsonify({"message": "No data found for this swimmer"}), 404
-    data = [{"splash_score": p.splash_score,"training_load": p.training_load,"max_hr":p.max_hr,"average_hr":p.average_hr,"Date": p.date.strftime("%Y-%m-%d")} for p in performances]
+    data = [
+        {
+            "splash_score": p.splash_score,
+            "training_load": p.training_load,
+            "max_hr": p.max_hr,
+            "average_hr": p.average_hr,
+            "Date": p.date.strftime("%Y-%m-%d"),
+        }
+        for p in performances
+    ]
     return jsonify(data), 200
-
-
 
 
 # ✅ Route to Fetch Swimmers
@@ -132,12 +173,22 @@ def insert_swimmer():
 
     # ✅ Check if swimmer already exists
     existing_swimmer = db.session.execute(
-        text("SELECT * FROM swimmers WHERE name = :name AND age = :age AND gender = :gender"),
-        {"name": data["name"], "age": data["age"], "gender": data["gender"]}
+        text(
+            "SELECT * FROM swimmers WHERE name = :name AND age = :age AND gender = :gender"
+        ),
+        {"name": data["name"], "age": data["age"], "gender": data["gender"]},
     ).fetchone()
 
     if existing_swimmer:
-        return jsonify({"message": "Swimmer already exists!", "Swimmer_ID": existing_swimmer.swimmer_id}), 409
+        return (
+            jsonify(
+                {
+                    "message": "Swimmer already exists!",
+                    "Swimmer_ID": existing_swimmer.swimmer_id,
+                }
+            ),
+            409,
+        )
 
     # ✅ Fetch the highest swimmer_id in the table
     max_id_result = db.session.execute(
@@ -163,7 +214,6 @@ def insert_swimmer():
         ),
         201,
     )
-
 
 
 # ✅ Route to Delete Last Swimmer
@@ -212,7 +262,6 @@ def get_last_deleted_swimmer():
         return jsonify({"last_deleted_swimmer": last_deleted_swimmer}), 200
     else:
         return jsonify({"error": "No swimmer has been deleted yet"}), 404
-    
 
 
 @app.route("/predict", methods=["POST"])
@@ -228,10 +277,9 @@ def predict_total_distance():
         performances = SwimmerPerformance.query.all()
 
         # Extract features and target
-        X = np.array([
-            [p.training_load, p.max_hr, p.calories_burned]
-            for p in performances
-        ])
+        X = np.array(
+            [[p.training_load, p.max_hr, p.calories_burned] for p in performances]
+        )
         y = np.array([p.total_distance for p in performances])
 
         # Train model
@@ -245,6 +293,62 @@ def predict_total_distance():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+
+@app.route("/ask", methods=["POST"])
+def ask_gpt():
+    q = request.json.get("question", "").lower()
+
+    # Map friendly terms to database fields
+    field_map = {
+        "total distance": "total_distance",
+        "distance": "total_distance",
+        "calories": "calories_burned",
+        "fly": "butterfly",
+        "butterfly": "butterfly",
+        "freestyle": "freestyle",
+        "backstroke": "backstroke",
+        "breaststroke": "breaststroke",
+        "kick": "kick",
+        "splash": "splash_score",
+        "training load": "training_load",
+        "average hr": "average_hr",
+        "max hr": "max_hr",
+    }
+
+    matched_field = next((field_map[k] for k in field_map if k in q), None)
+
+    if matched_field:
+        # Determine whether to search for highest or lowest
+        if any(word in q for word in ["highest", "best", "most", "top"]):
+            order_func = getattr(SwimmerPerformance, matched_field).desc()
+            direction = "highest"
+        elif any(word in q for word in ["lowest", "least", "minimum", "smallest"]):
+            order_func = getattr(SwimmerPerformance, matched_field).asc()
+            direction = "lowest"
+        else:
+            return jsonify(
+                {"answer": "Please specify if you're looking for highest or lowest."}
+            )
+
+        # Query the result
+        result = (
+            db.session.query(Swimmer.name, getattr(SwimmerPerformance, matched_field))
+            .join(Swimmer, Swimmer.swimmer_id == SwimmerPerformance.swimmer_id)
+            .order_by(order_func)
+            .first()
+        )
+
+        if result:
+            return jsonify(
+                {
+                        "answer": f"{result[0]} has the {direction} {matched_field.replace('_', ' ')}: {result[1]}"
+                }
+            )
+
+    return jsonify(
+        {"answer": "Sorry, I couldn’t understand the question or find related data."}
+    )
 
 
 if __name__ == "__main__":
