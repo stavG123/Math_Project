@@ -10,6 +10,8 @@ from openai import OpenAI
 import os
 from sentence_transformers import SentenceTransformer  # type: ignore
 import faiss, pandas as pd  # type: ignore
+import re
+
 
 
 app = Flask(__name__)
@@ -299,10 +301,9 @@ def predict_total_distance():
 def ask_gpt():
     q = request.json.get("question", "").lower()
 
-    # Map friendly terms to database fields
+    # Field map
     field_map = {
         "total distance": "total_distance",
-        "distance": "total_distance",
         "calories": "calories_burned",
         "fly": "butterfly",
         "butterfly": "butterfly",
@@ -314,12 +315,16 @@ def ask_gpt():
         "training load": "training_load",
         "average hr": "average_hr",
         "max hr": "max_hr",
+        "distance": "total_distance"
     }
+
+     # Extract limit (like "top 5")
+    match_limit = re.search(r'top\s*(\d+)', q)
+    limit = int(match_limit.group(1)) if match_limit else 1
 
     matched_field = next((field_map[k] for k in field_map if k in q), None)
 
     if matched_field:
-        # Determine whether to search for highest or lowest
         if any(word in q for word in ["highest", "best", "most", "top"]):
             order_func = getattr(SwimmerPerformance, matched_field).desc()
             direction = "highest"
@@ -327,28 +332,26 @@ def ask_gpt():
             order_func = getattr(SwimmerPerformance, matched_field).asc()
             direction = "lowest"
         else:
-            return jsonify(
-                {"answer": "Please specify if you're looking for highest or lowest."}
-            )
+            return jsonify({"answer": "Please specify if you're looking for highest or lowest."})
 
-        # Query the result
-        result = (
+        results = (
             db.session.query(Swimmer.name, getattr(SwimmerPerformance, matched_field))
             .join(Swimmer, Swimmer.swimmer_id == SwimmerPerformance.swimmer_id)
             .order_by(order_func)
-            .first()
+            .limit(limit)
+            .all()
         )
 
-        if result:
-            return jsonify(
-                {
-                        "answer": f"{result[0]} has the {direction} {matched_field.replace('_', ' ')}: {result[1]}"
-                }
+        if results:
+            answer_text = "\n".join(
+                f"{i+1}. {name} - {direction} {matched_field.replace('_', ' ')}: {value}"
+                for i, (name, value) in enumerate(results)
             )
+            return jsonify({"answer": answer_text})
+        else:
+            return jsonify({"answer": "No matching results found."})
 
-    return jsonify(
-        {"answer": "Sorry, I couldn’t understand the question or find related data."}
-    )
+    return jsonify({"answer": "Sorry, I couldn’t understand the question or find related data."})
 
 
 if __name__ == "__main__":
